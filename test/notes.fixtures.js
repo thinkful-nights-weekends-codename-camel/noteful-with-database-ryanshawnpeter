@@ -1,8 +1,8 @@
-function makeNotesArray() {
+function makeNotesArray() { 
   return [
     {
       "id": 1,
-      "note_title": "Dogs",
+      "note_title": "Dogs!",
       "date_modified": "2019-01-03T00:00:00.000Z",
       "folder_id": 1,
       "content": "Bacon ipsum dolor amet flank frankfurter pork belly pig, tongue landjaeger biltong turducken porchetta bresaola chicken. Prosciutto meatloaf ball tip, porchetta tongue pastrami corned beef jowl swine frankfurter filet mignon kevin drumstick. Biltong pastrami ribeye salami t-bone tenderloin cupim frankfurter prosciutto pancetta. Spare ribs pork belly prosciutto shankle."

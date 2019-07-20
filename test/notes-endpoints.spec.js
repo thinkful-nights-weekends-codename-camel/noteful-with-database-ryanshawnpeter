@@ -1,8 +1,9 @@
+
 const { expect } = require('chai');
 const knex = require('knex');
 const app = require('../src/app');
-const { makeNotesArray } = require('./notes.fixtures');
-const { makeFoldersArray } = require('./folders.fixtures');
+const { makeNotesArray } = require('../test/notes.fixtures');
+const { makeFoldersArray } = require('../test/folders.fixtures');
 
 describe('Notes Endpoints', function () {
   let db
@@ -23,7 +24,7 @@ describe('Notes Endpoints', function () {
   afterEach('cleanup', () => db('notes').del());
   afterEach('cleanup', () => db('folders').del());
 
-  describe.only('GET /api/notes', () => {
+  describe('GET /api/notes', () => {
     context('Given no notes', () => {
       it(`responds with 200 and an empty list`, () => {
         return supertest(app)
@@ -35,18 +36,6 @@ describe('Notes Endpoints', function () {
     context('Given there are notes in the database', () => {
       const testFolders = makeFoldersArray();
       const testNotes = makeNotesArray();
-
-      // beforeEach('insert folders', () => {
-      //   return db
-      //     .into('folders')
-      //     .insert(testFolders)
-      // });
-
-      // beforeEach('insert notes', () => {
-      //   return db
-      //     .into('notes')
-      //     .insert(testNotes)
-      // });
 
       beforeEach('insert folders', () => {
         return db
@@ -78,12 +67,18 @@ describe('Notes Endpoints', function () {
     });
 
     context('Given there are notes in the database', () => {
+      const testFolders = makeFoldersArray();
       const testNotes = makeNotesArray();
 
-      beforeEach('insert notes', () => {
+      beforeEach('insert folders', () => {
         return db
-          .into('notes')
-          .insert(testNotes)
+          .into('folders')
+          .insert(testFolders)
+          .then(() => {
+            return db
+            .into('notes')
+            .insert(testNotes)
+          })
       });
 
       it('responds with 200 and the specified note', () => {
@@ -96,19 +91,25 @@ describe('Notes Endpoints', function () {
     });
 
     context(`Given an XSS attack note`, () => {
+      const testFolders = makeFoldersArray();
       const maliciousNote = {
         id: 911,
         note_title: 'Silly rabbit <script>alert("xss");</script>',
         date_modified: '2019-01-03T00:00:00.000Z',
-        folder_id: 5,
+        folder_id: 1,
         content: `Bad image <img src="https://url.to.file.which/does-not.exist" onerror="alert(document.cookie);">. But not <strong>all</strong> bad.`
       }
 
-      beforeEach('insert malicious note', () => {
-        return db 
-          .into('notes')
-          .insert([ maliciousNote])
-      })
+      beforeEach('insert folders and malicious note', () => {
+        return db
+          .into('folders')
+          .insert(testFolders)
+          .then(() => {
+            return db
+            .into('notes')
+            .insert([ maliciousNote ])
+          })
+      });
 
       it('removes XSS attack content', () => {
         return supertest(app)
@@ -122,28 +123,52 @@ describe('Notes Endpoints', function () {
     })
   });
 
-  describe(`POST /api/notes`, () => {
+  describe.only(`POST /api/notes`, () => {
     it(`creates a note, responds with 201 and new note`, () => {
+      this.retries(3)
       const newNote = {
         note_title: 'test title',
-        date_modified: '2019-01-03T00:00:00.000Z',
-        folder_id: 1,
-        content: '',
+        content: 'Here we go'
       }
+
       return supertest(app)
         .post('/api/notes')
         .send(newNote)
         .expect(201)
         .expect(res => {
           expect(res.body.note_title).to.eql(newNote.note_title)
-          expect(res.body.date_modified).to.eql(newNote.date_modified)
           expect(res.body.content).to.eql(newNote.content)
+          expect(res.body).to.have.property('id')
+          expect(res.headers.location).to.eql(`/api/notes/${res.body.id}`)
+          const expected = new Date().toLocaleString()
+          const actual = new Date(res.body.date_modified).toLocaleString()
+          expect(actual).to.eql(expected)
         })
         .then(postRes =>
           supertest(app)
             .get(`/api/notes/${postRes.body.id}`)
             .expect(postRes.body)
         )
+    });
+
+    const requiredFields = ['note_title', 'content'];
+
+    requiredFields.forEach(field => {
+      const newNote = {
+        note_title: 'Test new note',
+        content: 'Test new note content...',
+      }
+
+      it(`responds with 400 and an error message when the '${field}' is missing`, () => {
+        delete newNote[field]
+
+        return supertest(app)
+          .post('/api/notes')
+          .send(newNote)
+          .expect(400, {
+            error: { message: `Missing '${field}' in request body` }
+          })
+      })
     });
   });
 
@@ -158,13 +183,19 @@ describe('Notes Endpoints', function () {
     })
 
     context('Given there are notes in the database', () => {
+      const testFolders = makeFoldersArray();
       const testNotes = makeNotesArray();
 
-      beforeEach('insert notes', () => {
+      beforeEach('insert folders and notes', () => {
         return db
-          .into('notes')
-          .insert(testNotes)
-      })
+          .into('folders')
+          .insert(testFolders)
+          .then(() => {
+            return db
+            .into('notes')
+            .insert(testNotes)
+          })
+      });
 
       it('responds with 204 and removes the notes', () => {
         const idToRemove = 2;
@@ -192,20 +223,25 @@ describe('Notes Endpoints', function () {
     })
 
     context('Given there are notes in the database', () => { 
+      const testFolders = makeFoldersArray();
       const testNotes = makeNotesArray()
 
-      beforeEach('insert notes', () => {
+      beforeEach('insert folders and notes', () => {
         return db
-          .into('notes')
-          .insert(testNotes)
-      })
+          .into('folders')
+          .insert(testFolders)
+          .then(() => {
+            return db
+            .into('notes')
+            .insert(testNotes)
+          })
+      });
 
-      it('responds with 204 and updates the bookmark', () => {
+      it('responds with 204 and updates the note', () => {
         const idToUpdate = 2
         const updateNote = {
           note_title: 'updated note title',
-          date_modified: '2019-01-03T00:00:00.000Z',
-          folder_id: 4,
+          folder_id: 1,
           content: `updated note description`
         }
         const expectedNote = {
