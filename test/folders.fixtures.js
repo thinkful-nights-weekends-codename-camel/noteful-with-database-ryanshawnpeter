@@ -1,7 +1,7 @@
 function makeFoldersArray() {
   return [
     {
-      "id": "1",
+      "id": 1,
       "folder_name": "Important"
     }
   ]

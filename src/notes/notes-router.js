@@ -37,7 +37,7 @@ NotesRouter
       }
     }
 
-    NotesService.insertNote(req.app.get('db'), newNote)
+    NotesService.insertNotes(req.app.get('db'), newNote)
       .then(note => {
         res
         .status(201)

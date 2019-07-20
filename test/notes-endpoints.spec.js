@@ -125,10 +125,20 @@ describe('Notes Endpoints', function () {
 
   describe.only(`POST /api/notes`, () => {
     it(`creates a note, responds with 201 and new note`, () => {
-      this.retries(3)
+      // this.retries(3)
+      const testFolders = makeFoldersArray();
+
+      before('insert folders', () => {
+        return db
+          .into('folders')
+          .insert(testFolders)
+      });
+
       const newNote = {
         note_title: 'test title',
-        content: 'Here we go'
+        content: 'Here we go',
+        folder_id: 1,
+        date_modified: '2019-01-03T00:00:00.000Z'
       }
 
       return supertest(app)
