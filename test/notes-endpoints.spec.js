@@ -123,43 +123,38 @@ describe('Notes Endpoints', function () {
     })
   });
 
-  describe.only(`POST /api/notes`, () => {
-    it(`creates a note, responds with 201 and new note`, () => {
-      // this.retries(3)
+  describe(`POST /api/notes`, () => {
+
+    beforeEach('insert folders', () => {
       const testFolders = makeFoldersArray();
+      return db
+        .into('folders')
+        .insert(testFolders)
+    });
 
-      before('insert folders', () => {
-        return db
-          .into('folders')
-          .insert(testFolders)
-      });
-
+    it(`creates a note, responding with 201 and the new note`, function() {
+      this.retries(3)
+      const testFolders = makeFoldersArray();
+      const testFolder = testFolders[0]
       const newNote = {
-        note_title: 'test title',
+        note_title: 'Test new comment',
         content: 'Here we go',
-        folder_id: 1,
-        date_modified: '2019-01-03T00:00:00.000Z'
+        folder_id: testFolder.id,
       }
-
       return supertest(app)
         .post('/api/notes')
         .send(newNote)
         .expect(201)
         .expect(res => {
-          expect(res.body.note_title).to.eql(newNote.note_title)
-          expect(res.body.content).to.eql(newNote.content)
           expect(res.body).to.have.property('id')
+          expect(res.body.content).to.eql(newNote.content)
+          expect(res.body.folder_id).to.eql(newNote.folder_id)
           expect(res.headers.location).to.eql(`/api/notes/${res.body.id}`)
-          const expected = new Date().toLocaleString()
-          const actual = new Date(res.body.date_modified).toLocaleString()
-          expect(actual).to.eql(expected)
+          const expectedDate = new Date().toLocaleString()
+          const actualDate = new Date(res.body.date_modified).toLocaleString()
+          expect(actualDate).to.eql(expectedDate)
         })
-        .then(postRes =>
-          supertest(app)
-            .get(`/api/notes/${postRes.body.id}`)
-            .expect(postRes.body)
-        )
-    });
+    })
 
     const requiredFields = ['note_title', 'content'];
 
@@ -219,7 +214,6 @@ describe('Notes Endpoints', function () {
               .expect(expectedNotes)
           )
       })
-    })
   })
 
   describe(`PATCH /api/notes/:note_id`, () => {
@@ -303,4 +297,5 @@ describe('Notes Endpoints', function () {
       })
     })
   })
+  });
 });

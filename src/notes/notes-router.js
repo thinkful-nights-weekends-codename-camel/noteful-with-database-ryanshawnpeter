@@ -25,8 +25,8 @@ NotesRouter
       .catch(next)
   })
   .post(NotesJson, (req, res, next) => {
-    const { note_title, content } = req.body;
-    const newNote = { note_title, content };
+    const { note_title, content, folder_id } = req.body;
+    const newNote = { note_title, content, folder_id };
 
     for (const [key, value] of Object.entries(newNote)) {
       if (value == null) {
@@ -36,13 +36,13 @@ NotesRouter
         });
       }
     }
-
+    
     NotesService.insertNotes(req.app.get('db'), newNote)
       .then(note => {
         res
         .status(201)
         .location(path.posix.join(req.originalUrl, `/${note.id}`))
-        .json(note)
+        .json(serializeNote(note))
       })
       .catch(next)
   })
