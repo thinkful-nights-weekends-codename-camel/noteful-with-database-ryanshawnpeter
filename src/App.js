@@ -7,6 +7,7 @@ const { NODE_ENV } = require('./config')
 const notesRouter = require('./notes/notes-router');
 const foldersRouter = require('./folders/folders-router');
 
+
 const app = express()
 
 const morganOption = (NODE_ENV === 'production')
