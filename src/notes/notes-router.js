@@ -3,7 +3,7 @@ const express = require('express');
 const xss = require('xss');
 const NotesJson = express.json();
 const NotesRouter = express.Router();
-const logger = require('../logger');
+// const logger = require('../logger');
 const NotesService = require('./notes-service');
 
 const serializeNote =  note => ({
@@ -30,7 +30,7 @@ NotesRouter
 
     for (const [key, value] of Object.entries(newNote)) {
       if (value == null) {
-        logger.error(`Title and Content are required.`)
+        // logger.error(`Title and Content are required.`)
         return res.status(400).json({
           error: { message: `Missing '${key}' in request body` }
         });
@@ -57,7 +57,7 @@ NotesRouter
     )
       .then(note => {
         if (!note) {
-          logger.error(`Note with id ${note_id} not found.`)
+          // logger.error(`Note with id ${note_id} not found.`)
           return res.status(404).json({
             error: { message: `Note does not exist`}
           })
@@ -77,7 +77,7 @@ NotesRouter
       note_id
     )
       .then(() => {
-        logger.info(`Note with id ${note_id} deleted.`)
+        // logger.info(`Note with id ${note_id} deleted.`)
         res.status(204).end()
       })
       .catch(next)

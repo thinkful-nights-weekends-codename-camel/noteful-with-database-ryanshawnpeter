@@ -3,7 +3,7 @@ const express = require('express');
 const xss = require('xss');
 const FoldersJson = express.json();
 const FoldersRouter = express.Router();
-const logger = require('../logger');
+// const logger = require('../logger');
 const FoldersService = require('./folders-service')
 
 const serializeFolder =  folder => ({
@@ -27,7 +27,7 @@ FoldersRouter
 
     for (const [key, value] of Object.entries(newFolder)) {
       if (value == null) {
-        logger.error(`Name is required.`)
+        // logger.error(`Name is required.`)
         return res.status(400).json({
           error: { message: `Missing '${key}' in request body` }
         });
@@ -54,7 +54,7 @@ FoldersRouter
     )
       .then(folder => {
         if (!folder) {
-          logger.error(`Folder with id ${folder_id} not found.`)
+          // logger.error(`Folder with id ${folder_id} not found.`)
           return res.status(404).json({
             error: { message: `Folder does not exist`}
           })
@@ -74,7 +74,7 @@ FoldersRouter
       folder_id
     )
       .then(() => {
-        logger.info(`Folder with id ${folder_id} deleted.`)
+        // logger.info(`Folder with id ${folder_id} deleted.`)
         res.status(204).end()
       })
       .catch(next)
